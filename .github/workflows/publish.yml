@@ -1,0 +1,36 @@
+name: Publish
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+*"
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dart-lang/setup-dart@v1
+
+      - name: Install dependencies
+        run: dart pub get
+
+      - name: Analyze
+        run: dart analyze --fatal-infos
+
+      - name: Test
+        run: dart test
+
+      # Writes the pub.dev OAuth credentials from the PUB_CREDENTIALS secret.
+      # To obtain the value:
+      #   1. Run `dart pub login` on your local machine.
+      #   2. Copy the contents of ~/.pub-cache/credentials.json.
+      #   3. Add it as a GitHub Actions secret named PUB_CREDENTIALS.
+      - name: Configure pub credentials
+        run: |
+          mkdir -p ~/.pub-cache
+          echo '${{ secrets.PUB_CREDENTIALS }}' > ~/.pub-cache/credentials.json
+
+      - name: Publish
+        run: dart pub publish --force

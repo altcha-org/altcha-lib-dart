@@ -1,0 +1,25 @@
+name: altcha_lib
+description: >-
+  Server-side Dart library for the ALTCHA Proof-of-Work v2 challenge system.
+  Create, solve, and verify challenges using PBKDF2, SHA, Scrypt, or Argon2id.
+version: 0.1.0
+repository: https://github.com/altcha-org/altcha-lib-dart
+issue_tracker: https://github.com/altcha-org/altcha-lib-dart/issues
+topics:
+  - altcha
+  - captcha
+  - proof-of-work
+  - security
+  - spam-protection
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  argon2: ^1.0.1
+  crypto: ^3.0.3
+  pointycastle: ^3.9.1
+
+dev_dependencies:
+  lints: ^5.0.0
+  test: ^1.25.0
