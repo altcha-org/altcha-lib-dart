@@ -9,6 +9,9 @@ jobs:
   publish:
     runs-on: ubuntu-latest
 
+    permissions:
+      id-token: write  # Required for OIDC publishing to pub.dev
+
     steps:
       - uses: actions/checkout@v4
       - uses: dart-lang/setup-dart@v1
@@ -21,16 +24,6 @@ jobs:
 
       - name: Test
         run: dart test
-
-      # Writes the pub.dev OAuth credentials from the PUB_CREDENTIALS secret.
-      # To obtain the value:
-      #   1. Run `dart pub login` on your local machine.
-      #   2. Copy the contents of ~/.pub-cache/credentials.json.
-      #   3. Add it as a GitHub Actions secret named PUB_CREDENTIALS.
-      - name: Configure pub credentials
-        run: |
-          mkdir -p ~/.pub-cache
-          echo '${{ secrets.PUB_CREDENTIALS }}' > ~/.pub-cache/credentials.json
 
       - name: Publish
         run: dart pub publish --force
