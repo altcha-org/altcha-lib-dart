@@ -1,3 +1,9 @@
+## 0.1.1
+
+- Upgraded `pointycastle` to `^4.0.0`.
+- Removed `argon2` dependency; Argon2id now uses pointycastle's built-in implementation.
+- Upgraded `lints` to `^6.1.0`.
+
 ## 0.1.0
 
 - Initial release.
