@@ -1,6 +1,6 @@
 import 'dart:typed_data';
 
-import 'package:argon2/argon2.dart';
+import 'package:pointycastle/export.dart';
 
 import '../types.dart';
 
@@ -18,6 +18,7 @@ Future<DeriveKeyResult> deriveKey(
   final params = Argon2Parameters(
     Argon2Parameters.ARGON2_id,
     Uint8List.fromList(salt),
+    desiredKeyLength: parameters.keyLength,
     iterations: parameters.cost,
     memory: parameters.memoryCost ?? 65536,
     lanes: parameters.parallelism ?? 1,
@@ -26,7 +27,7 @@ Future<DeriveKeyResult> deriveKey(
 
   final generator = Argon2BytesGenerator()..init(params);
   final result = Uint8List(parameters.keyLength);
-  generator.generateBytes(Uint8List.fromList(password), result, 0, result.length);
+  generator.deriveKey(Uint8List.fromList(password), 0, result, 0);
 
   return DeriveKeyResult(derivedKey: result, parameters: {});
 }

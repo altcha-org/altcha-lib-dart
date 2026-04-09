@@ -267,7 +267,7 @@ Future<bool> verifyFieldsHash({
 ## Requirements
 
 - Dart SDK `>=3.0.0`
-- Dependencies: [`argon2`](https://pub.dev/packages/argon2), [`crypto`](https://pub.dev/packages/crypto), [`pointycastle`](https://pub.dev/packages/pointycastle)
+- Dependencies: [`crypto`](https://pub.dev/packages/crypto), [`pointycastle`](https://pub.dev/packages/pointycastle)
 
 ## License
 
