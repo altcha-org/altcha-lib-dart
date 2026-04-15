@@ -5,6 +5,7 @@ import 'package:test/test.dart';
 import 'package:altcha_lib/src/helpers.dart';
 import 'package:altcha_lib/src/password_buffer.dart';
 import 'package:altcha_lib/src/pow.dart';
+import 'package:altcha_lib/src/pow_io.dart';
 import 'package:altcha_lib/src/types.dart';
 import 'package:altcha_lib/src/algorithms/pbkdf2.dart' as pbkdf2;
 
