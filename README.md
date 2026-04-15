@@ -12,7 +12,7 @@ Or add manually to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  altcha_lib: ^0.1.0
+  altcha_lib: ^0.2.0
 ```
 
 ## Examples
