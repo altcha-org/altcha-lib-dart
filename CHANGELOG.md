@@ -1,3 +1,8 @@
+## 0.2.0
+
+- The PBKDF2 algorithm now uses `crypto` for improved performance
+- Added `adaptiveDeriveKey` with automatic algorithm detection
+
 ## 0.1.1
 
 - Upgraded `pointycastle` to `^4.0.0`.
