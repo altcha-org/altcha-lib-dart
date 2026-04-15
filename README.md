@@ -150,6 +150,20 @@ import 'package:altcha_lib/src/algorithms/scrypt.dart' as scrypt;
 import 'package:altcha_lib/src/algorithms/argon2id.dart' as argon2id;
 ```
 
+Or use `adaptiveDeriveKey` to dispatch automatically based on `ChallengeParameters.algorithm`:
+
+```dart
+import 'package:altcha_lib/algorithms.dart' show adaptiveDeriveKey;
+
+final solution = await solveChallengeIsolates(
+  challenge: challenge,
+  deriveKey: adaptiveDeriveKey, // dispatches to PBKDF2, SHA, SCRYPT, or ARGON2ID
+  concurrency: 4,
+);
+```
+
+`adaptiveDeriveKey` is a top-level function and crosses isolate boundaries safely.
+
 Scrypt requires additional parameters:
 
 ```dart
@@ -177,6 +191,20 @@ final challenge = await createChallenge(
 ```
 
 ## API Reference
+
+### `adaptiveDeriveKey`
+
+Dispatches to the correct KDF based on `parameters.algorithm`. Import from `package:altcha_lib/algorithms.dart`.
+
+```dart
+Future<DeriveKeyResult> adaptiveDeriveKey(
+  ChallengeParameters parameters,
+  List<int> salt,
+  List<int> password,
+)
+```
+
+Supported algorithms (case-insensitive): `PBKDF2/SHA-256`, `PBKDF2/SHA-384`, `PBKDF2/SHA-512`, `SHA-256`, `SHA-384`, `SHA-512`, `SCRYPT`, `ARGON2ID`. Throws `UnsupportedError` for unknown values.
 
 ### `createChallenge`
 
