@@ -1,3 +1,7 @@
+## 0.4.0
+
+- Fix web compatibility issues
+
 ## 0.2.0
 
 - The PBKDF2 algorithm now uses `crypto` for improved performance
