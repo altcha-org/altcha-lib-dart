@@ -270,7 +270,9 @@ Future<VerifySolutionResult> verifySolution({
           .setCounter(solution.counter);
   final result = await deriveKey(challenge.parameters, saltBuf, password);
   final derivedKeyHex = bufferToHex(result.derivedKey);
-  final invalidSolution = !constantTimeEqual(derivedKeyHex, solution.derivedKey);
+  final keyMatches = constantTimeEqual(derivedKeyHex, solution.derivedKey);
+  final prefixMatches = derivedKeyHex.startsWith(challenge.parameters.keyPrefix);
+  final invalidSolution = !(keyMatches && prefixMatches);
 
   return VerifySolutionResult(
     expired: false,

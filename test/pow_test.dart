@@ -297,6 +297,50 @@ void main() {
       expect(result.verified, isFalse);
       expect(result.invalidSolution, isTrue);
     });
+
+    test('fallback path rejects genuinely-derived key that violates keyPrefix', () async {
+      // No hmacKeySignatureSecret -> forces the slow re-derive path (4b).
+      var challenge = await createChallenge(
+        algorithm: 'PBKDF2/SHA-256',
+        cost: 10,
+        deriveKey: pbkdf2.deriveKey,
+      );
+
+      // Learn the honest KDF output for counter 0 with exactly one hash
+      // computation: solve a probe copy of the challenge whose keyPrefix is
+      // '' (matches immediately, no search).
+      final probe = Challenge(parameters: challenge.parameters.copyWith(keyPrefix: ''));
+      final honest = (await solveChallenge(
+        challenge: probe,
+        deriveKey: pbkdf2.deriveKey,
+      ))!;
+
+      // Pick a keyPrefix the honest key is guaranteed not to satisfy: a byte
+      // can't be both 0x00 and 0xff.
+      final mismatchedPrefix = honest.derivedKey.startsWith('00') ? 'ff' : '00';
+      challenge = Challenge(
+        parameters: challenge.parameters.copyWith(keyPrefix: mismatchedPrefix),
+      );
+      final signed = await signChallenge(
+        HmacAlgorithm.sha256,
+        challenge.parameters,
+        null,
+        hmacSignatureSecret,
+        null,
+      );
+
+      // Submit the honestly-derived key/counter pair (one KDF execution, no
+      // prefix search) against the challenge whose signed keyPrefix it does
+      // not satisfy.
+      final result = await verifySolution(
+        challenge: signed,
+        solution: Solution(counter: honest.counter, derivedKey: honest.derivedKey),
+        deriveKey: pbkdf2.deriveKey,
+        hmacSignatureSecret: hmacSignatureSecret,
+      );
+      expect(result.verified, isFalse);
+      expect(result.invalidSolution, isTrue);
+    });
   });
 
   group('solveChallengeIsolates()', () {
