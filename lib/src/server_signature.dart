@@ -66,10 +66,7 @@ Future<VerifyServerSignatureResult> verifyServerSignature({
 
   final verificationData = parseVerificationData(payload.verificationData);
 
-  final expired = verificationData != null &&
-      verificationData.containsKey('expire') &&
-      (verificationData['expire'] as int) <
-          DateTime.now().millisecondsSinceEpoch ~/ 1000;
+  final expired = _isExpired(verificationData?['expire']);
 
   final invalidSolution = verificationData == null ||
       verificationData['verified'] != true ||
@@ -85,4 +82,20 @@ Future<VerifyServerSignatureResult> verifyServerSignature({
     verified: verified,
     verificationData: verificationData,
   );
+}
+
+/// altcha-lib's `!!expire && expire < Math.floor(Date.now() / 1000)` for the
+/// value types [parseVerificationData] yields. `expire` is client-controlled
+/// until the signature is checked, so this must not throw.
+bool _isExpired(Object? expire) {
+  final num? value = switch (expire) {
+    num n => n,
+    bool b => b ? 1 : 0,
+    // JS coerces strings to numbers; non-numeric ones never compare as less.
+    String s => s.isEmpty ? 0 : num.tryParse(s),
+    _ => null,
+  };
+  return value != null &&
+      value != 0 &&
+      value < DateTime.now().millisecondsSinceEpoch ~/ 1000;
 }
