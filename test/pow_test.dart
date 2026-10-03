@@ -242,6 +242,21 @@ void main() {
       expect(signed.parameters.keySignature, isNull);
     });
 
+    test('ignores extra keys that name modelled parameters', () async {
+      ChallengeParameters params(Map<String, Object?> extra) =>
+          ChallengeParameters(
+            algorithm: 'PBKDF2/SHA-256',
+            nonce: '39baf91a19d671f8231217f9e28342a6',
+            salt: '5e00d5d152e1a5db7d44fb6404a40a5e',
+            keyPrefix: '00',
+            cost: 1000,
+            keyLength: 32,
+            extra: extra,
+          );
+      final shadowed = params({'foo': 'bar', 'memoryCost': 5, 'keyPrefix': ''});
+      expect(shadowed.toJson(), equals(params({'foo': 'bar'}).toJson()));
+    });
+
     test('merges all parameters returned by deriveKey', () async {
       Future<DeriveKeyResult> deriveKey(
           ChallengeParameters parameters, List<int> salt, List<int> password) async {

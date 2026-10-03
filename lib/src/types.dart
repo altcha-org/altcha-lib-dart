@@ -34,7 +34,7 @@ class ChallengeParameters {
 
   /// Parameters not modelled above (from a custom [DeriveKeyFunction] or
   /// another implementation), kept verbatim so they are signed and verified.
-  /// Modelled fields take precedence over same-named keys here.
+  /// Keys naming a modelled field are ignored, even when that field is null.
   final Map<String, Object?> extra;
 
   static const _knownKeys = {
@@ -90,7 +90,8 @@ class ChallengeParameters {
 
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{
-      ...extra,
+      for (final e in extra.entries)
+        if (!_knownKeys.contains(e.key)) e.key: e.value,
       'algorithm': algorithm,
       'cost': cost,
       'keyLength': keyLength,
