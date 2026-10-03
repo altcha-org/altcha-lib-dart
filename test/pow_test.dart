@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 import 'package:test/test.dart';
@@ -71,6 +72,35 @@ void main() {
         result.signature,
         equals(
             'a10045ef3381d5516e0c3fd6bf0b90e02fab68d576ffe9e0e1c2d1cd1e404f2a'),
+      );
+    });
+
+    test('signs nested data like altcha-lib (sorted keys, nulls kept)', () async {
+      final parameters = ChallengeParameters(
+        algorithm: 'PBKDF2/SHA-256',
+        nonce: '39baf91a19d671f8231217f9e28342a6',
+        salt: '5e00d5d152e1a5db7d44fb6404a40a5e',
+        keyPrefix: '00',
+        cost: 1000,
+        keyLength: 32,
+        data: {
+          'b': 'x',
+          'a': null,
+          'c': {'z': 1, 'y': true},
+        },
+      );
+      final result = await signChallenge(
+        HmacAlgorithm.sha256,
+        parameters,
+        null,
+        hmacSignatureSecret,
+        null,
+      );
+      // Computed with altcha-lib (JS) v2 canonicalJSON + HMAC-SHA256.
+      expect(
+        result.signature,
+        equals(
+            'd6a70784812667316e8baa50479afcf9b61f1e44d3d4737b51b4400595a7a6b2'),
       );
     });
   });
@@ -197,6 +227,31 @@ void main() {
       expect(result.expired, isFalse);
       expect(result.invalidSignature, isFalse);
       expect(result.invalidSolution, isFalse);
+    });
+
+    test('verifies a challenge with unsorted and null data', () async {
+      final challenge = await createChallenge(
+        algorithm: 'PBKDF2/SHA-256',
+        cost: 100,
+        deriveKey: pbkdf2.deriveKey,
+        data: {'b': '1', 'a': null},
+        hmacSignatureSecret: hmacSignatureSecret,
+      );
+      final wire = Challenge.fromJson(
+        jsonDecode(jsonEncode(challenge.toJson())) as Map<String, dynamic>,
+      );
+      final solution = (await solveChallenge(
+        challenge: wire,
+        deriveKey: pbkdf2.deriveKey,
+      ))!;
+      final result = await verifySolution(
+        challenge: wire,
+        solution: solution,
+        deriveKey: pbkdf2.deriveKey,
+        hmacSignatureSecret: hmacSignatureSecret,
+      );
+      expect(result.invalidSignature, isFalse);
+      expect(result.verified, isTrue);
     });
 
     test('successfully verifies in deterministic mode', () async {

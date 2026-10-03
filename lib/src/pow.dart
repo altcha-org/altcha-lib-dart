@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'helpers.dart';
 import 'password_buffer.dart';
@@ -102,9 +101,12 @@ Future<Challenge> _signChallenge(
       ),
     );
   }
-  final sortedJson = parameters.toSortedJson();
   final signature = bufferToHex(
-    hmacSignString(algorithm, jsonEncode(sortedJson), hmacSignatureSecret),
+    hmacSignString(
+      algorithm,
+      canonicalJson(parameters.toJson()),
+      hmacSignatureSecret,
+    ),
   );
   return Challenge(parameters: parameters, signature: signature);
 }
@@ -228,7 +230,7 @@ Future<VerifySolutionResult> verifySolution({
   final signatureCheck = bufferToHex(
     hmacSignString(
       hmacAlgorithm,
-      canonicalJson(challenge.parameters.toSortedJson()),
+      canonicalJson(challenge.parameters.toJson()),
       hmacSignatureSecret,
     ),
   );

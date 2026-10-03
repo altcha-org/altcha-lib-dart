@@ -102,19 +102,21 @@ Uint8List randomBytes(int length) {
   return bytes;
 }
 
-/// Returns a canonical (sorted-key) JSON string.
+/// Returns a canonical JSON string: map keys sorted recursively, matching
+/// altcha-lib's `canonicalJSON`. Null values are kept (JS drops only
+/// `undefined`, which has no Dart counterpart).
 String canonicalJson(Map<String, dynamic> obj) {
-  return jsonEncode(_sortKeys(obj));
+  return jsonEncode(sortKeys(obj));
 }
 
-dynamic _sortKeys(dynamic value) {
+/// Recursively sorts map keys alphabetically. Lists are left as-is.
+dynamic sortKeys(dynamic value) {
   if (value is Map) {
-    final sorted = Map.fromEntries(
-      (value.entries.toList()..sort((a, b) => (a.key as String).compareTo(b.key as String)))
-          .where((e) => e.value != null)
-          .map((e) => MapEntry(e.key, _sortKeys(e.value))),
+    return Map<String, dynamic>.fromEntries(
+      (value.entries.toList()
+            ..sort((a, b) => (a.key as String).compareTo(b.key as String)))
+          .map((e) => MapEntry(e.key as String, sortKeys(e.value))),
     );
-    return sorted;
   }
   return value;
 }

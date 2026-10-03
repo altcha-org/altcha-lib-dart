@@ -1,3 +1,5 @@
+import 'helpers.dart';
+
 /// Supported HMAC digest algorithms.
 enum HmacAlgorithm {
   sha256('SHA-256'),
@@ -78,14 +80,9 @@ class ChallengeParameters {
     return map;
   }
 
-  /// Returns a new map with keys sorted alphabetically (for canonical JSON).
-  Map<String, dynamic> toSortedJson() {
-    final json = toJson();
-    final sorted = Map.fromEntries(
-      json.entries.toList()..sort((a, b) => a.key.compareTo(b.key)),
-    );
-    return sorted;
-  }
+  /// Returns [toJson] with map keys sorted recursively (canonical order).
+  Map<String, dynamic> toSortedJson() =>
+      sortKeys(toJson()) as Map<String, dynamic>;
 
   ChallengeParameters copyWith({
     String? keyPrefix,
