@@ -10,7 +10,7 @@ typedef _IsolateArgs = ({
   int counterStart,
   int counterStep,
   String counterModeStr,
-  int timeoutMs,
+  int timeoutUs,
   SendPort sendPort,
 });
 
@@ -19,6 +19,7 @@ typedef _IsolateArgs = ({
 /// Each isolate tests an interleaved subset of counter values
 /// (isolate `i` starts at `i` and steps by [concurrency]).
 /// The first isolate to find a solution wins; all others are killed immediately.
+/// A [timeout] of [Duration.zero] disables the timeout.
 ///
 /// [deriveKey] must be a top-level or static function — closures cannot
 /// be sent across isolate boundaries.
@@ -43,7 +44,7 @@ Future<Solution?> solveChallengeIsolates({
           counterStart: i,
           counterStep: workerCount,
           counterModeStr: counterMode == CounterMode.string ? 'string' : 'uint32',
-          timeoutMs: timeout.inMilliseconds,
+          timeoutUs: timeout.inMicroseconds,
           sendPort: receivePort.sendPort,
         ),
       ));
@@ -79,7 +80,7 @@ Future<void> _isolateWorker(_IsolateArgs args) async {
     counterStart: args.counterStart,
     counterStep: args.counterStep,
     counterMode: counterMode,
-    timeout: Duration(milliseconds: args.timeoutMs),
+    timeout: Duration(microseconds: args.timeoutUs),
   );
   args.sendPort.send(solution?.toJson());
 }

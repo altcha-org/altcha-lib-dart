@@ -230,6 +230,25 @@ void main() {
       );
       expect(solution, isNull);
     });
+
+    test('treats a zero timeout as no timeout', () async {
+      final challenge = Challenge(
+        parameters: ChallengeParameters(
+          algorithm: 'PBKDF2/SHA-256',
+          nonce: 'aabbccdd00112233aabbccdd00112233',
+          salt: '11223344556677889900aabbccddeeff',
+          keyPrefix: 'a',
+          cost: 1000,
+          keyLength: 32,
+        ),
+      );
+      final solution = await solveChallenge(
+        challenge: challenge,
+        deriveKey: pbkdf2.deriveKey,
+        timeout: Duration.zero,
+      );
+      expect(solution?.counter, equals(20));
+    });
   });
 
   group('verifySolution()', () {

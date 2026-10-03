@@ -237,7 +237,7 @@ Future<Solution?> solveChallenge({
   CounterMode counterMode,
   int counterStart,              // default: 0
   int counterStep,               // default: 1
-  Duration timeout,              // default: 90 seconds
+  Duration timeout,              // default: 90 seconds; Duration.zero = no timeout
   Stream<void>? abortSignal,
 })
 ```
@@ -252,7 +252,7 @@ Future<Solution?> solveChallengeIsolates({
   required DeriveKeyFunction deriveKey, // must be a top-level or static function
   int concurrency,                      // default: 1, max: 16
   CounterMode counterMode,
-  Duration timeout,                     // default: 90 seconds
+  Duration timeout,                     // default: 90 seconds; Duration.zero = no timeout
 })
 ```
 

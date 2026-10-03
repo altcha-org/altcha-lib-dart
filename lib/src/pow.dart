@@ -134,7 +134,8 @@ Future<Challenge> signChallenge(
 /// Solves a challenge by iterating counter values until the derived key
 /// starts with [Challenge.parameters.keyPrefix].
 ///
-/// Returns [null] on timeout or abort.
+/// Returns [null] on timeout or abort. A [timeout] of [Duration.zero]
+/// disables the timeout (as in altcha-lib).
 Future<Solution?> solveChallenge({
   required Challenge challenge,
   required DeriveKeyFunction deriveKey,
@@ -172,7 +173,10 @@ Future<Solution?> solveChallenge({
       // Every 10 iterations: check abort/timeout and yield to the event loop.
       if (iteration % 10 == 0) {
         if (aborted) return null;
-        if (DateTime.now().difference(start) > timeout) return null;
+        if (timeout != Duration.zero &&
+            DateTime.now().difference(start) > timeout) {
+          return null;
+        }
         await Future<void>.delayed(Duration.zero);
       }
 
