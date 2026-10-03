@@ -312,6 +312,46 @@ void main() {
       }
     });
 
+    test('compares even-length keyPrefix as bytes (case-insensitive)', () async {
+      Future<Challenge> signed(String keyPrefix) => signChallenge(
+            HmacAlgorithm.sha256,
+            ChallengeParameters(
+              algorithm: 'PBKDF2/SHA-256',
+              nonce: 'aabbccdd00112233aabbccdd00112233',
+              salt: '11223344556677889900aabbccddeeff',
+              keyPrefix: keyPrefix,
+              cost: 1000,
+              keyLength: 32,
+            ),
+            null,
+            hmacSignatureSecret,
+            null,
+          );
+      final challenge = await signed('F2');
+      final solution = (await solveChallenge(
+        challenge: challenge,
+        deriveKey: pbkdf2.deriveKey,
+      ))!;
+      expect(solution.counter, equals(42));
+      final result = await verifySolution(
+        challenge: challenge,
+        solution: solution,
+        deriveKey: pbkdf2.deriveKey,
+        hmacSignatureSecret: hmacSignatureSecret,
+      );
+      expect(result.verified, isTrue);
+
+      // A malformed signed prefix fails closed instead of throwing.
+      final malformed = await verifySolution(
+        challenge: await signed('zz'),
+        solution: solution,
+        deriveKey: pbkdf2.deriveKey,
+        hmacSignatureSecret: hmacSignatureSecret,
+      );
+      expect(malformed.invalidSignature, isFalse);
+      expect(malformed.invalidSolution, isTrue);
+    });
+
     test('fails when expired', () async {
       final expiredAt =
           DateTime.now().subtract(const Duration(seconds: 1)).millisecondsSinceEpoch ~/

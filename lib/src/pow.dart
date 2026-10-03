@@ -274,7 +274,13 @@ Future<VerifySolutionResult> verifySolution({
   final result = await deriveKey(challenge.parameters, saltBuf, password);
   final derivedKeyHex = bufferToHex(result.derivedKey);
   final keyMatches = constantTimeEqual(derivedKeyHex, solution.derivedKey);
-  final prefixMatches = derivedKeyHex.startsWith(challenge.parameters.keyPrefix);
+  // Same rule as solveChallenge: even length → byte compare, odd → hex prefix.
+  // A malformed even prefix falls back to the hex compare, which never matches.
+  final keyPrefix = challenge.parameters.keyPrefix;
+  final keyPrefixBuf = keyPrefix.length.isEven ? tryHexToBuffer(keyPrefix) : null;
+  final prefixMatches = keyPrefixBuf != null
+      ? bufferStartsWith(result.derivedKey, keyPrefixBuf)
+      : derivedKeyHex.startsWith(keyPrefix);
   final invalidSolution = !(keyMatches && prefixMatches);
 
   return VerifySolutionResult(
