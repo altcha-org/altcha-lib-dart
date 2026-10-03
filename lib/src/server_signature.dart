@@ -47,6 +47,9 @@ Future<bool> verifyFieldsHash({
 }
 
 /// Verifies a server-issued ALTCHA signature payload.
+///
+/// An empty [hmacSecret] is treated as unset: the result is `invalidSignature`,
+/// since anyone can compute an HMAC under the empty key.
 Future<VerifyServerSignatureResult> verifyServerSignature({
   required ServerSignaturePayload payload,
   required String hmacSecret,
@@ -55,7 +58,11 @@ Future<VerifyServerSignatureResult> verifyServerSignature({
   final algorithm = HmacAlgorithm.fromString(payload.algorithm);
 
   final dataHash = hashData(payload.algorithm, utf8.encode(payload.verificationData));
-  final signature = bufferToHex(hmacSign(algorithm, dataHash, hmacSecret));
+  final invalidSignature = hmacSecret.isEmpty ||
+      !constantTimeEqual(
+        payload.signature,
+        bufferToHex(hmacSign(algorithm, dataHash, hmacSecret)),
+      );
 
   final verificationData = parseVerificationData(payload.verificationData);
 
@@ -64,7 +71,6 @@ Future<VerifyServerSignatureResult> verifyServerSignature({
       (verificationData['expire'] as int) <
           DateTime.now().millisecondsSinceEpoch ~/ 1000;
 
-  final invalidSignature = !constantTimeEqual(payload.signature, signature);
   final invalidSolution = verificationData == null ||
       verificationData['verified'] != true ||
       payload.verified != true;

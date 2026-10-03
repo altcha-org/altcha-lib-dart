@@ -103,6 +103,21 @@ void main() {
             'd6a70784812667316e8baa50479afcf9b61f1e44d3d4737b51b4400595a7a6b2'),
       );
     });
+
+    test('rejects an empty hmacSignatureSecret', () {
+      final parameters = ChallengeParameters(
+        algorithm: 'PBKDF2/SHA-256',
+        nonce: '39baf91a19d671f8231217f9e28342a6',
+        salt: '5e00d5d152e1a5db7d44fb6404a40a5e',
+        keyPrefix: '00',
+        cost: 1000,
+        keyLength: 32,
+      );
+      expect(
+        () => signChallenge(HmacAlgorithm.sha256, parameters, null, '', null),
+        throwsArgumentError,
+      );
+    });
   });
 
   group('createChallenge()', () {
@@ -158,6 +173,30 @@ void main() {
       expect(result.parameters.keyPrefix.length, equals(32));
       expect(result.parameters.keySignature?.length, equals(64));
       expect(result.signature?.length, equals(64));
+    });
+
+    test('treats empty secrets as unset', () async {
+      final unsigned = await createChallenge(
+        algorithm: 'PBKDF2/SHA-256',
+        cost: 100,
+        counter: 5,
+        deriveKey: pbkdf2.deriveKey,
+        hmacSignatureSecret: '',
+        hmacKeySignatureSecret: '',
+      );
+      expect(unsigned.signature, isNull);
+      expect(unsigned.parameters.keySignature, isNull);
+
+      final signed = await createChallenge(
+        algorithm: 'PBKDF2/SHA-256',
+        cost: 100,
+        counter: 5,
+        deriveKey: pbkdf2.deriveKey,
+        hmacSignatureSecret: hmacSignatureSecret,
+        hmacKeySignatureSecret: '',
+      );
+      expect(signed.signature, isNotNull);
+      expect(signed.parameters.keySignature, isNull);
     });
   });
 
@@ -393,6 +432,41 @@ void main() {
       );
       expect(result.expired, isFalse);
       expect(result.verified, isTrue);
+    });
+
+    test('re-derives when hmacKeySignatureSecret is empty', () async {
+      final (:challenge, :solution) = await solve(100);
+      expect(challenge.parameters.keySignature, isNotNull);
+      final result = await verifySolution(
+        challenge: challenge,
+        solution: solution,
+        deriveKey: pbkdf2.deriveKey,
+        hmacSignatureSecret: hmacSignatureSecret,
+        hmacKeySignatureSecret: '',
+      );
+      expect(result.verified, isTrue);
+    });
+
+    test('rejects challenges when hmacSignatureSecret is empty', () async {
+      // Anyone can produce an HMAC under the empty key.
+      final (:challenge, :solution) = await solve();
+      final forged = Challenge(
+        parameters: challenge.parameters,
+        signature: bufferToHex(hmacSignString(
+          HmacAlgorithm.sha256,
+          canonicalJson(challenge.parameters.toJson()),
+          '',
+        )),
+      );
+      final result = await verifySolution(
+        challenge: forged,
+        solution: solution,
+        deriveKey: pbkdf2.deriveKey,
+        hmacSignatureSecret: '',
+      );
+      expect(result.verified, isFalse);
+      expect(result.invalidSignature, isTrue);
+      expect(result.invalidSolution, isNull);
     });
 
     test('fails with tampered keyPrefix', () async {

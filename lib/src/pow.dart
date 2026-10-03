@@ -73,7 +73,7 @@ Future<Challenge> createChallenge({
     );
   }
 
-  if (hmacSignatureSecret == null) {
+  if (hmacSignatureSecret == null || hmacSignatureSecret.isEmpty) {
     return Challenge(parameters: parameters);
   }
 
@@ -87,6 +87,9 @@ Future<Challenge> createChallenge({
 }
 
 /// Signs challenge parameters with HMAC and returns a [Challenge] with a signature.
+///
+/// Throws [ArgumentError] if [hmacSignatureSecret] is empty: a signature under
+/// the empty key authenticates nothing (altcha-lib rejects it as well).
 Future<Challenge> _signChallenge(
   HmacAlgorithm algorithm,
   ChallengeParameters parameters,
@@ -94,7 +97,13 @@ Future<Challenge> _signChallenge(
   String hmacSignatureSecret,
   String? hmacKeySignatureSecret,
 ) async {
-  if (derivedKey != null && hmacKeySignatureSecret != null) {
+  if (hmacSignatureSecret.isEmpty) {
+    throw ArgumentError.value(
+        hmacSignatureSecret, 'hmacSignatureSecret', 'must not be empty');
+  }
+  if (derivedKey != null &&
+      hmacKeySignatureSecret != null &&
+      hmacKeySignatureSecret.isNotEmpty) {
     parameters = parameters.copyWith(
       keySignature: bufferToHex(
         hmacSign(algorithm, derivedKey, hmacKeySignatureSecret),
@@ -217,7 +226,9 @@ Future<VerifySolutionResult> verifySolution({
   }
 
   // 2. Signature presence check.
-  if (challenge.signature == null) {
+  // An empty secret is unset (as in altcha-lib); nothing can be authenticated,
+  // and anyone can compute an HMAC under the empty key.
+  if (challenge.signature == null || hmacSignatureSecret.isEmpty) {
     return VerifySolutionResult(
       expired: false,
       invalidSignature: true,
@@ -247,7 +258,10 @@ Future<VerifySolutionResult> verifySolution({
 
   // 4a. Key signature fast path.
   final keySignature = challenge.parameters.keySignature;
-  if (keySignature != null && hmacKeySignatureSecret != null) {
+  if (keySignature != null &&
+      keySignature.isNotEmpty &&
+      hmacKeySignatureSecret != null &&
+      hmacKeySignatureSecret.isNotEmpty) {
     // derivedKey is client-controlled: malformed hex is an invalid solution.
     final derivedKeyBytes = tryHexToBuffer(solution.derivedKey);
     final valid = derivedKeyBytes != null &&
