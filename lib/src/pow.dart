@@ -12,7 +12,7 @@ Future<Challenge> createChallenge({
   int? counter,
   CounterMode counterMode = CounterMode.uint32,
   Map<String, Object?>? data,
-  Object? expiresAt, // int (unix seconds) or DateTime
+  Object? expiresAt, // num (unix seconds) or DateTime
   HmacAlgorithm hmacAlgorithm = HmacAlgorithm.sha256,
   String? hmacKeySignatureSecret,
   String? hmacSignatureSecret,
@@ -24,10 +24,10 @@ Future<Challenge> createChallenge({
 }) async {
   final kPrefixLen = keyPrefixLength ?? keyLength ~/ 2;
 
-  int? expiresAtSeconds;
+  num? expiresAtSeconds;
   if (expiresAt is DateTime) {
     expiresAtSeconds = expiresAt.millisecondsSinceEpoch ~/ 1000;
-  } else if (expiresAt is int) {
+  } else if (expiresAt is num) {
     expiresAtSeconds = expiresAt;
   }
 
@@ -53,20 +53,11 @@ Future<Challenge> createChallenge({
             .setCounter(counter);
     deriveKeyResult = await deriveKey(parameters, saltBuf, password);
     if (deriveKeyResult.parameters != null) {
-      // Merge extra parameters returned by deriveKey (e.g. updated memoryCost).
-      final p = deriveKeyResult.parameters!;
-      parameters = ChallengeParameters(
-        algorithm: p['algorithm'] as String? ?? parameters.algorithm,
-        nonce: parameters.nonce,
-        salt: parameters.salt,
-        cost: p['cost'] as int? ?? parameters.cost,
-        keyLength: p['keyLength'] as int? ?? parameters.keyLength,
-        keyPrefix: parameters.keyPrefix,
-        memoryCost: p['memoryCost'] as int? ?? parameters.memoryCost,
-        parallelism: p['parallelism'] as int? ?? parameters.parallelism,
-        expiresAt: parameters.expiresAt,
-        data: parameters.data,
-      );
+      // Like Object.assign in altcha-lib: every returned key overrides.
+      parameters = ChallengeParameters.fromJson({
+        ...parameters.toJson(),
+        ...deriveKeyResult.parameters!,
+      });
     }
     parameters = parameters.copyWith(
       keyPrefix: bufferToHex(deriveKeyResult.derivedKey.sublist(0, kPrefixLen)),

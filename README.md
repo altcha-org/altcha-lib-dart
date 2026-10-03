@@ -216,7 +216,7 @@ Future<Challenge> createChallenge({
   int? counter,
   CounterMode counterMode,       // CounterMode.uint32 (default) or CounterMode.string
   Map<String, Object?>? data,
-  Object? expiresAt,             // DateTime or int (Unix seconds)
+  Object? expiresAt,             // DateTime or num (Unix seconds)
   HmacAlgorithm hmacAlgorithm,   // default: HmacAlgorithm.sha256
   String? hmacKeySignatureSecret,
   String? hmacSignatureSecret,

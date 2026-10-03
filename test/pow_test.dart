@@ -198,6 +198,41 @@ void main() {
       expect(signed.signature, isNotNull);
       expect(signed.parameters.keySignature, isNull);
     });
+
+    test('merges all parameters returned by deriveKey', () async {
+      Future<DeriveKeyResult> deriveKey(
+          ChallengeParameters parameters, List<int> salt, List<int> password) async {
+        final result = await pbkdf2.deriveKey(parameters, salt, password);
+        return DeriveKeyResult(
+          derivedKey: result.derivedKey,
+          parameters: {'foo': 'bar', 'memoryCost': 7},
+        );
+      }
+
+      final challenge = await createChallenge(
+        algorithm: 'PBKDF2/SHA-256',
+        cost: 100,
+        counter: 5,
+        deriveKey: deriveKey,
+        hmacSignatureSecret: hmacSignatureSecret,
+      );
+      final wire = Challenge.fromJson(
+        jsonDecode(jsonEncode(challenge.toJson())) as Map<String, dynamic>,
+      );
+      expect(wire.parameters.toJson()['foo'], equals('bar'));
+      expect(wire.parameters.memoryCost, equals(7));
+
+      final result = await verifySolution(
+        challenge: wire,
+        solution: (await solveChallenge(
+          challenge: wire,
+          deriveKey: pbkdf2.deriveKey,
+        ))!,
+        deriveKey: pbkdf2.deriveKey,
+        hmacSignatureSecret: hmacSignatureSecret,
+      );
+      expect(result.verified, isTrue);
+    });
   });
 
   group('solveChallenge()', () {
@@ -305,6 +340,44 @@ void main() {
       final result = await verifySolution(
         challenge: wire,
         solution: solution,
+        deriveKey: pbkdf2.deriveKey,
+        hmacSignatureSecret: hmacSignatureSecret,
+      );
+      expect(result.invalidSignature, isFalse);
+      expect(result.verified, isTrue);
+    });
+
+    // Signatures computed with altcha-lib (JS) v2 over the test vector
+    // (counter 42 → derivedKey f2e25aab…).
+    final jsSolution = Solution(
+      counter: 42,
+      derivedKey:
+          'f2e25aab6d5e504747ad0f52b1ce42afd99d8014634f263ea42b206300037acf',
+    );
+    Challenge jsChallenge(String extraJson, String signature) =>
+        Challenge.fromJson(jsonDecode('{"parameters":{'
+            '"algorithm":"PBKDF2/SHA-256","cost":1000,"keyLength":32,'
+            '"keyPrefix":"f2","nonce":"aabbccdd00112233aabbccdd00112233",'
+            '"salt":"11223344556677889900aabbccddeeff",$extraJson},'
+            '"signature":"$signature"}') as Map<String, dynamic>);
+
+    test('verifies JS challenges with unknown parameter keys', () async {
+      final result = await verifySolution(
+        challenge: jsChallenge('"foo":"bar","baz":null',
+            '0c7009c9e214b0e13cfbf090f98092e8e2bd1e6f6fe0068889c0f32e77d45606'),
+        solution: jsSolution,
+        deriveKey: pbkdf2.deriveKey,
+        hmacSignatureSecret: hmacSignatureSecret,
+      );
+      expect(result.invalidSignature, isFalse);
+      expect(result.verified, isTrue);
+    });
+
+    test('verifies JS challenges with fractional expiresAt', () async {
+      final result = await verifySolution(
+        challenge: jsChallenge('"expiresAt":4102444800.5',
+            '26384612047825a4d4fee2599357fafde1876d4ef2033b90e4d44753d464f21b'),
+        solution: jsSolution,
         deriveKey: pbkdf2.deriveKey,
         hmacSignatureSecret: hmacSignatureSecret,
       );

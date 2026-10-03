@@ -28,8 +28,28 @@ class ChallengeParameters {
   String? keySignature;
   final int? memoryCost;
   final int? parallelism;
-  final int? expiresAt;
+  /// Unix seconds; may be fractional (altcha-lib passes numbers through).
+  final num? expiresAt;
   final Map<String, Object?>? data;
+
+  /// Parameters not modelled above (from a custom [DeriveKeyFunction] or
+  /// another implementation), kept verbatim so they are signed and verified.
+  /// Modelled fields take precedence over same-named keys here.
+  final Map<String, Object?> extra;
+
+  static const _knownKeys = {
+    'algorithm',
+    'nonce',
+    'salt',
+    'cost',
+    'keyLength',
+    'keyPrefix',
+    'keySignature',
+    'memoryCost',
+    'parallelism',
+    'expiresAt',
+    'data',
+  };
 
   ChallengeParameters({
     required this.algorithm,
@@ -43,6 +63,7 @@ class ChallengeParameters {
     this.parallelism,
     this.expiresAt,
     this.data,
+    this.extra = const {},
   });
 
   factory ChallengeParameters.fromJson(Map<String, dynamic> json) {
@@ -56,15 +77,20 @@ class ChallengeParameters {
       keySignature: json['keySignature'] as String?,
       memoryCost: json['memoryCost'] as int?,
       parallelism: json['parallelism'] as int?,
-      expiresAt: json['expiresAt'] as int?,
+      expiresAt: json['expiresAt'] as num?,
       data: json['data'] == null
           ? null
           : Map<String, Object?>.from(json['data'] as Map),
+      extra: {
+        for (final e in json.entries)
+          if (!_knownKeys.contains(e.key)) e.key: e.value,
+      },
     );
   }
 
   Map<String, dynamic> toJson() {
     final map = <String, dynamic>{
+      ...extra,
       'algorithm': algorithm,
       'cost': cost,
       'keyLength': keyLength,
@@ -100,6 +126,7 @@ class ChallengeParameters {
       parallelism: parallelism,
       expiresAt: expiresAt,
       data: data,
+      extra: extra,
     );
   }
 }
