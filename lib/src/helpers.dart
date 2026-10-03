@@ -133,18 +133,18 @@ String canonicalJson(Map<String, dynamic> obj) {
   return out.toString();
 }
 
-/// Writes [value] as compact JSON in iteration order.
+/// Writes [value] as compact JSON, with map keys in JS enumeration order.
 void _writeJson(StringBuffer out, Object? value) {
   if (value is Map) {
     out.write('{');
     var first = true;
-    for (final e in value.entries) {
+    for (final key in _jsPropertyOrder(value.keys.cast<String>())) {
       if (!first) out.write(',');
       first = false;
       out
-        ..write(jsonEncode(e.key as String))
+        ..write(jsonEncode(key))
         ..write(':');
-      _writeJson(out, e.value);
+      _writeJson(out, value[key]);
     }
     out.write('}');
   } else if (value is List) {
@@ -168,16 +168,47 @@ void _writeJson(StringBuffer out, Object? value) {
   }
 }
 
-/// Recursively sorts map keys alphabetically. Lists are left as-is.
+/// Recursively sorts map keys like altcha-lib's `sortKeys`, as JS then
+/// enumerates them: array-index keys (`"0"`…`"4294967294"`) in numeric order,
+/// then all other keys sorted by UTF-16 code units. `__proto__` is dropped
+/// (in JS, assigning it sets the prototype instead of adding a key).
+/// Lists are left as-is.
 dynamic sortKeys(dynamic value) {
   if (value is Map) {
-    return Map<String, dynamic>.fromEntries(
-      (value.entries.toList()
-            ..sort((a, b) => (a.key as String).compareTo(b.key as String)))
-          .map((e) => MapEntry(e.key as String, sortKeys(e.value))),
-    );
+    final keys = value.keys.cast<String>().where((k) => k != '__proto__').toList()
+      ..sort();
+    return <String, dynamic>{
+      for (final key in _jsPropertyOrder(keys)) key: sortKeys(value[key]),
+    };
   }
   return value;
+}
+
+final _arrayIndexPattern = RegExp(r'^(?:0|[1-9][0-9]{0,9})$');
+
+/// Returns [key] as an ECMAScript array index (0 ≤ i ≤ 2^32 − 2), or null.
+int? _arrayIndex(String key) {
+  if (!_arrayIndexPattern.hasMatch(key)) return null;
+  final index = int.parse(key);
+  return index <= 4294967294 ? index : null;
+}
+
+/// Orders [keys] the way JS enumerates an object's own properties: array-index
+/// keys in ascending numeric order, then the rest in their given order.
+List<String> _jsPropertyOrder(Iterable<String> keys) {
+  final indexed = <(int, String)>[];
+  final rest = <String>[];
+  for (final key in keys) {
+    final index = _arrayIndex(key);
+    if (index != null) {
+      indexed.add((index, key));
+    } else {
+      rest.add(key);
+    }
+  }
+  if (indexed.isEmpty) return rest;
+  indexed.sort((a, b) => a.$1.compareTo(b.$1));
+  return [for (final (_, key) in indexed) key, ...rest];
 }
 
 /// Returns elapsed milliseconds since [start] (Stopwatch-based), rounded to 1 decimal.

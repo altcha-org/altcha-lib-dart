@@ -74,6 +74,23 @@ void main() {
             '"l":[{"z":1,"y":2},3],"n":{"y":1,"z":1},"s":"x\u2028\\""}'),
       );
     });
+
+    test('canonicalJson orders keys like JS objects', () {
+      // Array-index keys first (numerically), then the rest sorted; JS
+      // sortKeys drops `__proto__`; objects inside lists stay unsorted but
+      // still enumerate index keys first.
+      final obj = jsonDecode('{"b":1,"10":1,"9":2,"4294967294":3,'
+              '"4294967295":4,"-1":5,"01":6,"1.5":7,"a":8,"__proto__":9,'
+              '"l":[{"x":1,"10":2,"9":3,"__proto__":4}]}')
+          as Map<String, dynamic>;
+      // Output of altcha-lib (JS) canonicalJSON(JSON.parse(...)).
+      expect(
+        canonicalJson(obj),
+        equals('{"9":2,"10":1,"4294967294":3,"-1":5,"01":6,"1.5":7,'
+            '"4294967295":4,"a":8,"b":1,'
+            '"l":[{"9":3,"10":2,"x":1,"__proto__":4}]}'),
+      );
+    });
   });
 
   group('signChallenge()', () {
