@@ -202,10 +202,11 @@ Future<VerifySolutionResult> verifySolution({
 }) async {
   final start = DateTime.now();
 
-  // 1. Expiration check.
+  // 1. Expiration check (as altcha-lib: 0 means no expiry; fractional now).
   final expiresAt = challenge.parameters.expiresAt;
   if (expiresAt != null &&
-      expiresAt < DateTime.now().millisecondsSinceEpoch ~/ 1000) {
+      expiresAt != 0 &&
+      expiresAt < DateTime.now().millisecondsSinceEpoch / 1000) {
     return VerifySolutionResult(
       expired: true,
       invalidSignature: null,

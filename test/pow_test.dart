@@ -368,6 +368,33 @@ void main() {
       expect(result.verified, isFalse);
     });
 
+    test('expires within the current second (no rounding grace)', () async {
+      final (:challenge, :solution) =
+          await solve(null, DateTime.now().millisecondsSinceEpoch ~/ 1000);
+      final result = await verifySolution(
+        challenge: challenge,
+        solution: solution,
+        deriveKey: pbkdf2.deriveKey,
+        hmacSignatureSecret: hmacSignatureSecret,
+        hmacKeySignatureSecret: hmacKeySecret,
+      );
+      expect(result.expired, isTrue);
+      expect(result.verified, isFalse);
+    });
+
+    test('treats expiresAt 0 as no expiry', () async {
+      final (:challenge, :solution) = await solve(null, 0);
+      final result = await verifySolution(
+        challenge: challenge,
+        solution: solution,
+        deriveKey: pbkdf2.deriveKey,
+        hmacSignatureSecret: hmacSignatureSecret,
+        hmacKeySignatureSecret: hmacKeySecret,
+      );
+      expect(result.expired, isFalse);
+      expect(result.verified, isTrue);
+    });
+
     test('fails with tampered keyPrefix', () async {
       final (:challenge, :solution) = await solve();
       final tampered = Challenge(
