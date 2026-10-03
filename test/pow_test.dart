@@ -296,6 +296,22 @@ void main() {
       expect(result.invalidSolution, isTrue);
     });
 
+    test('rejects malformed derivedKey on the key-signature path', () async {
+      final (:challenge, :solution) = await solve(100);
+      for (final derivedKey in ['zz' * 32, 'abc', '-1' * 32, '+f' * 32]) {
+        final result = await verifySolution(
+          challenge: challenge,
+          solution: Solution(counter: solution.counter, derivedKey: derivedKey),
+          deriveKey: pbkdf2.deriveKey,
+          hmacSignatureSecret: hmacSignatureSecret,
+          hmacKeySignatureSecret: hmacKeySecret,
+        );
+        expect(result.verified, isFalse, reason: derivedKey);
+        expect(result.invalidSignature, isFalse, reason: derivedKey);
+        expect(result.invalidSolution, isTrue, reason: derivedKey);
+      }
+    });
+
     test('fails when expired', () async {
       final expiredAt =
           DateTime.now().subtract(const Duration(seconds: 1)).millisecondsSinceEpoch ~/

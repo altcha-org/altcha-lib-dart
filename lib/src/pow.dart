@@ -247,14 +247,15 @@ Future<VerifySolutionResult> verifySolution({
   // 4a. Key signature fast path.
   final keySignature = challenge.parameters.keySignature;
   if (keySignature != null && hmacKeySignatureSecret != null) {
-    final derivedKeySignatureCheck = bufferToHex(
-      hmacSign(
-        hmacAlgorithm,
-        hexToBuffer(solution.derivedKey),
-        hmacKeySignatureSecret,
-      ),
-    );
-    final valid = constantTimeEqual(keySignature, derivedKeySignatureCheck);
+    // derivedKey is client-controlled: malformed hex is an invalid solution.
+    final derivedKeyBytes = tryHexToBuffer(solution.derivedKey);
+    final valid = derivedKeyBytes != null &&
+        constantTimeEqual(
+          keySignature,
+          bufferToHex(
+            hmacSign(hmacAlgorithm, derivedKeyBytes, hmacKeySignatureSecret),
+          ),
+        );
     return VerifySolutionResult(
       expired: false,
       invalidSignature: false,

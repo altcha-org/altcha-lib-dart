@@ -32,6 +32,27 @@ Uint8List hexToBuffer(String hex) {
   return result;
 }
 
+/// Strictly decodes an even-length hex string (`[0-9a-fA-F]` only).
+/// Returns null for anything else, so untrusted input never throws.
+Uint8List? tryHexToBuffer(String hex) {
+  if (hex.length.isOdd) return null;
+  final result = Uint8List(hex.length ~/ 2);
+  for (var i = 0; i < hex.length; i += 2) {
+    final hi = _hexNibble(hex.codeUnitAt(i));
+    final lo = _hexNibble(hex.codeUnitAt(i + 1));
+    if (hi < 0 || lo < 0) return null;
+    result[i ~/ 2] = (hi << 4) | lo;
+  }
+  return result;
+}
+
+int _hexNibble(int c) {
+  if (c >= 0x30 && c <= 0x39) return c - 0x30; // 0-9
+  if (c >= 0x61 && c <= 0x66) return c - 0x57; // a-f
+  if (c >= 0x41 && c <= 0x46) return c - 0x37; // A-F
+  return -1;
+}
+
 /// Concatenates two byte lists.
 Uint8List concatBuffers(List<int> a, List<int> b) {
   final result = Uint8List(a.length + b.length);
