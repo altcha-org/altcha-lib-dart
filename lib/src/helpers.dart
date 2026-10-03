@@ -123,11 +123,49 @@ Uint8List randomBytes(int length) {
   return bytes;
 }
 
-/// Returns a canonical JSON string: map keys sorted recursively, matching
-/// altcha-lib's `canonicalJSON`. Null values are kept (JS drops only
-/// `undefined`, which has no Dart counterpart).
+/// Returns a canonical JSON string matching altcha-lib's `canonicalJSON`
+/// (`JSON.stringify(sortKeys(obj))`): map keys sorted recursively, nulls kept
+/// (JS drops only `undefined`, which has no Dart counterpart), and numbers
+/// formatted as in JS.
 String canonicalJson(Map<String, dynamic> obj) {
-  return jsonEncode(sortKeys(obj));
+  final out = StringBuffer();
+  _writeJson(out, sortKeys(obj));
+  return out.toString();
+}
+
+/// Writes [value] as compact JSON in iteration order.
+void _writeJson(StringBuffer out, Object? value) {
+  if (value is Map) {
+    out.write('{');
+    var first = true;
+    for (final e in value.entries) {
+      if (!first) out.write(',');
+      first = false;
+      out
+        ..write(jsonEncode(e.key as String))
+        ..write(':');
+      _writeJson(out, e.value);
+    }
+    out.write('}');
+  } else if (value is List) {
+    out.write('[');
+    for (var i = 0; i < value.length; i++) {
+      if (i > 0) out.write(',');
+      _writeJson(out, value[i]);
+    }
+    out.write(']');
+  } else if (value is double && value.isFinite) {
+    // Dart's shortest round-trip format (same exponent thresholds as JS)
+    // differs from JS only by the `.0` on integral values and `-0.0`.
+    if (value == 0) {
+      out.write('0');
+    } else {
+      final s = value.toString();
+      out.write(s.endsWith('.0') ? s.substring(0, s.length - 2) : s);
+    }
+  } else {
+    out.write(jsonEncode(value));
+  }
 }
 
 /// Recursively sorts map keys alphabetically. Lists are left as-is.

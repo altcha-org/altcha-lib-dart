@@ -48,6 +48,32 @@ void main() {
         ),
       );
     });
+
+    test('canonicalJson matches JSON.stringify(sortKeys(...))', () {
+      final obj = <String, dynamic>{
+        'n': {'z': 1, 'y': 1.0},
+        'a': 1.5,
+        'b': -0.0,
+        'c': 1e20,
+        'd': 1e21,
+        'e': 1e-7,
+        'f': 0.000001,
+        'g': -2,
+        'h': 123456789012345680000.0,
+        'l': [
+          {'z': 1, 'y': 2},
+          3.0,
+        ],
+        's': 'x\u2028"',
+      };
+      // Output of altcha-lib (JS) canonicalJSON for the same object.
+      expect(
+        canonicalJson(obj),
+        equals('{"a":1.5,"b":0,"c":100000000000000000000,"d":1e+21,'
+            '"e":1e-7,"f":0.000001,"g":-2,"h":123456789012345680000,'
+            '"l":[{"z":1,"y":2},3],"n":{"y":1,"z":1},"s":"x\u2028\\""}'),
+      );
+    });
   });
 
   group('signChallenge()', () {
