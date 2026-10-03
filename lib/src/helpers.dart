@@ -79,8 +79,7 @@ List<int> hmacSign(HmacAlgorithm algorithm, List<int> data, String keyStr) {
 }
 
 /// Computes an HMAC-SHA signature from a string message.
-List<int> hmacSignString(
-    HmacAlgorithm algorithm, String data, String keyStr) {
+List<int> hmacSignString(HmacAlgorithm algorithm, String data, String keyStr) {
   return hmacSign(algorithm, utf8.encode(data), keyStr);
 }
 
@@ -175,7 +174,10 @@ void _writeJson(StringBuffer out, Object? value) {
 /// Lists are left as-is.
 dynamic sortKeys(dynamic value) {
   if (value is Map) {
-    final keys = value.keys.cast<String>().where((k) => k != '__proto__').toList()
+    final keys = value.keys
+        .cast<String>()
+        .where((k) => k != '__proto__')
+        .toList()
       ..sort();
     return <String, dynamic>{
       for (final key in _jsPropertyOrder(keys)) key: sortKeys(value[key]),

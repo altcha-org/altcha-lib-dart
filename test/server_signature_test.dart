@@ -60,7 +60,8 @@ void main() {
       };
       for (final MapEntry(key: expire, value: expired) in cases.entries) {
         final result = await verifyServerSignature(
-          payload: payloadSignedWith(hmacSecret, 'verified=true&expire=$expire'),
+          payload:
+              payloadSignedWith(hmacSecret, 'verified=true&expire=$expire'),
           hmacSecret: hmacSecret,
         );
         expect(result.expired, expired, reason: 'expire=$expire');

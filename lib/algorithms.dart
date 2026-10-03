@@ -12,7 +12,8 @@ import 'src/algorithms/scrypt.dart' as scrypt;
 import 'src/algorithms/sha.dart' as sha;
 import 'src/types.dart';
 
-export 'src/types.dart' show ChallengeParameters, DeriveKeyFunction, DeriveKeyResult;
+export 'src/types.dart'
+    show ChallengeParameters, DeriveKeyFunction, DeriveKeyResult;
 
 /// Derives a key using the algorithm named in [parameters.algorithm].
 ///

@@ -28,6 +28,7 @@ class ChallengeParameters {
   String? keySignature;
   final int? memoryCost;
   final int? parallelism;
+
   /// Unix seconds; may be fractional (altcha-lib passes numbers through).
   final num? expiresAt;
   final Map<String, Object?>? data;

@@ -56,8 +56,7 @@ Future<void> _handleRequest(HttpRequest request) async {
     } else if (request.method == 'POST' && request.uri.path == '/submit') {
       await _postSubmit(request);
     } else {
-      _sendJson(request.response, HttpStatus.notFound,
-          {'error': 'Not found'});
+      _sendJson(request.response, HttpStatus.notFound, {'error': 'Not found'});
     }
   } catch (e, st) {
     stderr.writeln('Unhandled error: $e\n$st');
@@ -126,8 +125,8 @@ Future<void> _postSubmit(HttpRequest request) async {
         : result.invalidSignature == true
             ? 'Invalid challenge signature'
             : 'Invalid solution';
-    _sendJson(request.response, HttpStatus.unprocessableEntity,
-        {'error': reason});
+    _sendJson(
+        request.response, HttpStatus.unprocessableEntity, {'error': reason});
     return;
   }
 
@@ -159,8 +158,7 @@ void _sendJson(HttpResponse response, int status, Map<String, dynamic> body) {
 
 Future<String> _readBody(HttpRequest request) async {
   final buffer = StringBuffer();
-  await for (final chunk
-      in request.cast<List<int>>().transform(utf8.decoder)) {
+  await for (final chunk in request.cast<List<int>>().transform(utf8.decoder)) {
     buffer.write(chunk);
   }
   return buffer.toString();

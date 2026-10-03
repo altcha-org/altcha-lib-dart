@@ -48,9 +48,9 @@ Future<Challenge> createChallenge({
   if (counter != null) {
     final nonceBuf = hexToBuffer(parameters.nonce);
     final saltBuf = hexToBuffer(parameters.salt);
-    final password =
-        PasswordBuffer(nonceBuf, mode: counterMode == CounterMode.string ? 'string' : 'uint32')
-            .setCounter(counter);
+    final password = PasswordBuffer(nonceBuf,
+            mode: counterMode == CounterMode.string ? 'string' : 'uint32')
+        .setCounter(counter);
     deriveKeyResult = await deriveKey(parameters, saltBuf, password);
     if (deriveKeyResult.parameters != null) {
       // Like Object.assign in altcha-lib: every returned key overrides.
@@ -119,8 +119,8 @@ Future<Challenge> signChallenge(
   String hmacSignatureSecret,
   String? hmacKeySignatureSecret,
 ) =>
-    _signChallenge(
-        algorithm, parameters, derivedKey, hmacSignatureSecret, hmacKeySignatureSecret);
+    _signChallenge(algorithm, parameters, derivedKey, hmacSignatureSecret,
+        hmacKeySignatureSecret);
 
 /// Solves a challenge by iterating counter values until the derived key
 /// starts with [Challenge.parameters.keyPrefix].
@@ -278,16 +278,17 @@ Future<VerifySolutionResult> verifySolution({
   // 4b. Re-derive and compare.
   final nonceBuf = hexToBuffer(challenge.parameters.nonce);
   final saltBuf = hexToBuffer(challenge.parameters.salt);
-  final password =
-      PasswordBuffer(nonceBuf, mode: counterMode == CounterMode.string ? 'string' : 'uint32')
-          .setCounter(solution.counter);
+  final password = PasswordBuffer(nonceBuf,
+          mode: counterMode == CounterMode.string ? 'string' : 'uint32')
+      .setCounter(solution.counter);
   final result = await deriveKey(challenge.parameters, saltBuf, password);
   final derivedKeyHex = bufferToHex(result.derivedKey);
   final keyMatches = constantTimeEqual(derivedKeyHex, solution.derivedKey);
   // Same rule as solveChallenge: even length → byte compare, odd → hex prefix.
   // A malformed even prefix falls back to the hex compare, which never matches.
   final keyPrefix = challenge.parameters.keyPrefix;
-  final keyPrefixBuf = keyPrefix.length.isEven ? tryHexToBuffer(keyPrefix) : null;
+  final keyPrefixBuf =
+      keyPrefix.length.isEven ? tryHexToBuffer(keyPrefix) : null;
   final prefixMatches = keyPrefixBuf != null
       ? bufferStartsWith(result.derivedKey, keyPrefixBuf)
       : derivedKeyHex.startsWith(keyPrefix);

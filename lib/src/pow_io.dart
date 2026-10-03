@@ -43,7 +43,8 @@ Future<Solution?> solveChallengeIsolates({
           deriveKey: deriveKey,
           counterStart: i,
           counterStep: workerCount,
-          counterModeStr: counterMode == CounterMode.string ? 'string' : 'uint32',
+          counterModeStr:
+              counterMode == CounterMode.string ? 'string' : 'uint32',
           timeoutUs: timeout.inMicroseconds,
           sendPort: receivePort.sendPort,
         ),

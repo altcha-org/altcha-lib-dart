@@ -57,7 +57,8 @@ Future<VerifyServerSignatureResult> verifyServerSignature({
   final start = DateTime.now();
   final algorithm = HmacAlgorithm.fromString(payload.algorithm);
 
-  final dataHash = hashData(payload.algorithm, utf8.encode(payload.verificationData));
+  final dataHash =
+      hashData(payload.algorithm, utf8.encode(payload.verificationData));
   final invalidSignature = hmacSecret.isEmpty ||
       !constantTimeEqual(
         payload.signature,

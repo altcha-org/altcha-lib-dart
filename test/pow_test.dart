@@ -80,9 +80,8 @@ void main() {
       // sortKeys drops `__proto__`; objects inside lists stay unsorted but
       // still enumerate index keys first.
       final obj = jsonDecode('{"b":1,"10":1,"9":2,"4294967294":3,'
-              '"4294967295":4,"-1":5,"01":6,"1.5":7,"a":8,"__proto__":9,'
-              '"l":[{"x":1,"10":2,"9":3,"__proto__":4}]}')
-          as Map<String, dynamic>;
+          '"4294967295":4,"-1":5,"01":6,"1.5":7,"a":8,"__proto__":9,'
+          '"l":[{"x":1,"10":2,"9":3,"__proto__":4}]}') as Map<String, dynamic>;
       // Output of altcha-lib (JS) canonicalJSON(JSON.parse(...)).
       expect(
         canonicalJson(obj),
@@ -118,7 +117,8 @@ void main() {
       );
     });
 
-    test('signs nested data like altcha-lib (sorted keys, nulls kept)', () async {
+    test('signs nested data like altcha-lib (sorted keys, nulls kept)',
+        () async {
       final parameters = ChallengeParameters(
         algorithm: 'PBKDF2/SHA-256',
         nonce: '39baf91a19d671f8231217f9e28342a6',
@@ -258,8 +258,8 @@ void main() {
     });
 
     test('merges all parameters returned by deriveKey', () async {
-      Future<DeriveKeyResult> deriveKey(
-          ChallengeParameters parameters, List<int> salt, List<int> password) async {
+      Future<DeriveKeyResult> deriveKey(ChallengeParameters parameters,
+          List<int> salt, List<int> password) async {
         final result = await pbkdf2.deriveKey(parameters, salt, password);
         return DeriveKeyResult(
           derivedKey: result.derivedKey,
@@ -501,7 +501,8 @@ void main() {
       }
     });
 
-    test('compares even-length keyPrefix as bytes (case-insensitive)', () async {
+    test('compares even-length keyPrefix as bytes (case-insensitive)',
+        () async {
       Future<Challenge> signed(String keyPrefix) => signChallenge(
             HmacAlgorithm.sha256,
             ChallengeParameters(
@@ -542,9 +543,10 @@ void main() {
     });
 
     test('fails when expired', () async {
-      final expiredAt =
-          DateTime.now().subtract(const Duration(seconds: 1)).millisecondsSinceEpoch ~/
-              1000;
+      final expiredAt = DateTime.now()
+              .subtract(const Duration(seconds: 1))
+              .millisecondsSinceEpoch ~/
+          1000;
       final (:challenge, :solution) = await solve(null, expiredAt);
       final result = await verifySolution(
         challenge: challenge,
@@ -660,7 +662,8 @@ void main() {
       expect(result.invalidSolution, isTrue);
     });
 
-    test('fallback path rejects genuinely-derived key that violates keyPrefix', () async {
+    test('fallback path rejects genuinely-derived key that violates keyPrefix',
+        () async {
       // No hmacKeySignatureSecret -> forces the slow re-derive path (4b).
       var challenge = await createChallenge(
         algorithm: 'PBKDF2/SHA-256',
@@ -671,7 +674,8 @@ void main() {
       // Learn the honest KDF output for counter 0 with exactly one hash
       // computation: solve a probe copy of the challenge whose keyPrefix is
       // '' (matches immediately, no search).
-      final probe = Challenge(parameters: challenge.parameters.copyWith(keyPrefix: ''));
+      final probe =
+          Challenge(parameters: challenge.parameters.copyWith(keyPrefix: ''));
       final honest = (await solveChallenge(
         challenge: probe,
         deriveKey: pbkdf2.deriveKey,
@@ -696,7 +700,8 @@ void main() {
       // not satisfy.
       final result = await verifySolution(
         challenge: signed,
-        solution: Solution(counter: honest.counter, derivedKey: honest.derivedKey),
+        solution:
+            Solution(counter: honest.counter, derivedKey: honest.derivedKey),
         deriveKey: pbkdf2.deriveKey,
         hmacSignatureSecret: hmacSignatureSecret,
       );
